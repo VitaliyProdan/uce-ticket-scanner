@@ -2,3 +2,5 @@
 .DS_Store
 css/main.css
 node_modules
+dist
+dist.zip

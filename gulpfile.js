@@ -41,7 +41,7 @@ gulp.task('phonegap', function (cb) {
     var runSequence = require('run-sequence');
     runSequence('bump-version',
                 'build',
-                'zip-dist',
+                'copy-dist',
                 cb);
 });
 
@@ -63,6 +63,12 @@ gulp.task('zip-dist', function (cb) {
     }]);
 
     archive.finalize();
+});
+
+gulp.task('copy-dist', function () {
+    return gulp.src([ 'dist/**' ],
+                    { base: './dist/' })
+               .pipe(gulp.dest('../Dist'));
 });
 
 gulp.task('bump-version', function (cb) {
@@ -93,6 +99,8 @@ gulp.task('bump-version', function (cb) {
 
     doc.documentElement.setAttribute('version', version);
     fs.writeFileSync('config.xml', new xmldom.XMLSerializer().serializeToString(doc));
+
+    cb();
 });
 
 // Mimic:

@@ -1,14 +1,14 @@
-<?xml version="1.0" encoding="UTF-8"?><widget xmlns="http://www.w3.org/ns/widgets" xmlns:gap="http://phonegap.com/ns/1.0" id="org.brophy.uce.test" version="0.0.1">
+<?xml version="1.0" encoding="UTF-8"?><widget xmlns="http://www.w3.org/ns/widgets" xmlns:gap="http://phonegap.com/ns/1.0" id="org.brophy.uce.test" version="0.0.5">
     <!-- IDs used for different builds
           org.brophy.uce.test
           org.brophy.uce.rc
     -->
 
-    <name>TicketScanner</name>
+    <name>TicketScanner Test</name>
     <!-- Names used for different builds
-           PAR Toolkit Test
-           PAR Toolkit RC
-           PAR Toolkit
+      TicketScanner Test
+      TicketScanner RC
+      TicketScanner
     -->
 
     <description>UpcomingEvents TicketScanner</description>
