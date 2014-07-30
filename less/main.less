@@ -67,7 +67,7 @@ button {
   }
 
   .manual {
-    padding: 1em 2em;
+    padding: 1em;
   }
 
   .input-qrcode {
@@ -101,6 +101,23 @@ button {
 
 .page-valid {
   background-color: @green;
+
+  table {
+    width: 100%;
+    margin-bottom: 2em;
+
+    td {
+      padding: 0.25em 1em;
+
+      &.label {
+        text-align: right;
+      }
+
+      &.field {
+        text-align: left;
+      }
+    }
+  }
 }
 
 .page-invalid {
