@@ -62,27 +62,43 @@ UCE.reset = function () {
 };
 
 UCE.scanTicket = function () {
-  var dfd = new $.Deferred();
+  var scanner = UCE.getbarcodeScanner();
 
-  function success(code) {
-    code = '123456789';
-    UCE.log('Scanned code: ' + code);
-    UCE.showValid();
-    dfd.resolve();
+  function success(result) {
+    if (result.cancelled !== 0) {
+      UCE.log('User cancelled the scan.');
+      return;
+    } else if (result.format !== 'QR_CODE') {
+      UCE.log('QR code not found.');
+      return;
+    }
+
+    UCE.log('Scanned code: ' + result.text);
+    UCE.submitTicket(result.text);
   }
 
   function error () {
     UCE.showInvalid();
-    dfd.reject();
   }
 
-  if (Math.random() > 0.5) {
-    setTimeout(success, 250);
-  } else {
-    setTimeout(error, 250);
+  if (!scanner) {
+    success({
+      cancelled: 0,
+      format: 'QR_CODE',
+      text: window.prompt('Enter a code', '123456789')
+    });
+    return;
   }
 
-  return dfd.promise();
+  scanner.scan(success, error);
+};
+
+UCE.getbarcodeScanner = function () {
+  if (window.cordova && window.cordova.plugins &&
+      window.cordova.plugins.barcodeScanner) {
+    return window.cordova.plugins.barcodeScanner;
+  }
+  return null;
 };
 
 UCE.submitManualCode = function (e) {
