@@ -62,7 +62,7 @@ UCE.reset = function () {
 };
 
 UCE.scanTicket = function () {
-  var scanner = UCE.getbarcodeScanner();
+  var scanner = UCE.getBarcodeScanner();
 
   function success(result) {
     if (result.cancelled !== 0) {
@@ -93,7 +93,7 @@ UCE.scanTicket = function () {
   scanner.scan(success, error);
 };
 
-UCE.getbarcodeScanner = function () {
+UCE.getBarcodeScanner = function () {
   if (window.cordova && window.cordova.plugins &&
       window.cordova.plugins.barcodeScanner) {
     return window.cordova.plugins.barcodeScanner;
@@ -114,7 +114,7 @@ UCE.submitManualCode = function (e) {
   UCE.submitTicket(code);
 };
 
-UCE.submitTicket = function (code) {
+UCE.ticketAjax = function (code) {
   var dfd = new $.Deferred();
 
   setTimeout(function () {
@@ -124,33 +124,40 @@ UCE.submitTicket = function (code) {
       return dfd.reject();  // Mimic failed ajax request
     } else if (Math.random() < 0.55) {
       mockData = {
-        valid: true,
-        ticketCode: code,
-        ticketType: 'VIP',
-        attendeeName: 'John Doe'
+        response: {
+          status: '1',
+          TicketType: 'VIP'
+        }
       };
     } else {
       mockData = {
-        valid: false,
-        ticketCode: code,
-        error: 'Ticket already redeemed'
+        response: {
+          status: '0',
+          TicketType: null
+        }
       };
     }
 
     dfd.resolve(mockData);
   }, 1000);
 
-  function success(data) {
+  UCE.log('Faking ajax call..');
+  return dfd.promise();
+};
+
+UCE.submitTicket = function (code) {
+
+  function success(response) {
     var source, template;
-    if (data.valid) {
+    if (response.valid) {
       source = $('#tpl-valid').html();
       template = Handlebars.compile(source);
-      $('.page-valid .content').html(template(data));
+      $('.page-valid .content').html(template(response));
       return UCE.showValid();
     } else {
       source = $('#tpl-invalid').html();
       template = Handlebars.compile(source);
-      $('.page-invalid .content').html(template(data));
+      $('.page-invalid .content').html(template(response));
       return UCE.showInvalid();
     }
   }
@@ -161,7 +168,16 @@ UCE.submitTicket = function (code) {
                  'a valid internet connection and try again.');
   }
 
-  return dfd.promise().then(success, error);
+  function enhanceData(data) {
+    data.response.valid = (data.response.status === '1');
+    data.response.TicketCode = code;
+    return data.response;
+  }
+
+  return UCE.ticketAjax(code)
+            .then(enhanceData)
+            .done(success)
+            .fail(error);
 };
 
 UCE.deviceReadyDfd.promise().done(UCE.init);
