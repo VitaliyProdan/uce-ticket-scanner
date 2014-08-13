@@ -41,6 +41,7 @@ UCE.init = function () {
 UCE.bindListeners = function () {
   $('.btn-login').on('click', UCE.submitLogin);
   $('.btn-scan').on('click', UCE.scanTicket);
+  $('.btn-scan-again').on('click', UCE.scanAgain);
   $('.btn-submit').on('click', UCE.submitManualCode);
   $('.hide').on('click', UCE.reset);
 };
@@ -281,6 +282,12 @@ UCE.reset = function (e) {
   UCE.hideValid();
   UCE.hideInvalid();
   $('.input-qrcode').val('');
+};
+
+UCE.scanAgain = function (e) {
+  UCE.cancelEvent(e);
+
+  UCE.hideValid().then(UCE.scanTicket);
 };
 
 UCE.scanTicket = function (e) {

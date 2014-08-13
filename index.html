@@ -7,7 +7,7 @@
   <meta name="description" content="" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui" />
 
-  <link href='http://fonts.googleapis.com/css?family=Kalam' rel='stylesheet' type='text/css'>
+  <!--<link href='http://fonts.googleapis.com/css?family=Kalam' rel='stylesheet' type='text/css'>-->
 
   <!-- build:css css/all.css -->
   <link rel="stylesheet" href="css/libs/normalize.css" />
@@ -22,7 +22,7 @@
   </header>
 
   <div class="page-login">
-    <h2>Ticket Checkin</h2>
+    <h2>Event Ticket Scanner</h2>
     <p>Please log in below</p>
     <fieldset>
       <label for="username">Username</label>
@@ -45,13 +45,14 @@
     </p>
     <input type="number" class="input-qrcode" name="qrcode" placeholder="Enter a Ticket Number" />
     <br/>
-    <button class="btn-submit">Submit Ticket</button>
+    <button class="btn-submit">Submit</button>
 
   </div>
 
   <div class="page-valid">
     <h1 class="valid">Valid Ticket</h1>
     <div class="content"></div>
+    <button class="btn-scan-again">Scan Again</button>
     <button class="hide">Done</button>
   </div>
 
