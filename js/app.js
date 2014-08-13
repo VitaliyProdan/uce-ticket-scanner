@@ -1,5 +1,6 @@
 var UCE = window.UCE || {},
-    Handlebars = window.Handlebars;
+    Handlebars = window.Handlebars,
+    lscache = window.lscache;
 
 // From: http://bit.ly/1gAKKPP
 function isInPhoneGap() {
@@ -46,10 +47,20 @@ UCE.bindListeners = function () {
 
 UCE.showPage = function (selector) {
   var $el = $(selector),
-      dfd = new $.Deferred();
+      dfd = new $.Deferred(),
+      logo;
 
   UCE.log('Showing page ' + selector);
   $el.addClass('show');
+
+  if (selector === '.page-scan') {
+    logo = UCE.getLogoUrl();
+    if (logo) {
+      $('.header img').attr('src', logo).show();
+    }
+  } else if (selector === '.page-login') {
+    $('.header img').attr('src', '').hide();
+  }
 
   requestAnimationFrame(function () {
     UCE.log('Frame 1 ');
@@ -98,49 +109,107 @@ UCE.hideInvalid = _.partial(UCE.hidePage, '.page-invalid');
 UCE.hideLogin = _.partial(UCE.hidePage, '.page-login');
 UCE.hideScan = _.partial(UCE.hidePage, '.page-scan');
 
+UCE.ajax = function (step, data) {
+  var endpoint = 'http://www.upcomingevents.com/ticketscanner/process.asp';
+
+  if (!data) { data= {}; }
+
+  data.step = step;
+
+  return $.ajax({
+    url: endpoint,
+    dataType: 'json',
+    data: data
+  });
+};
+
 UCE.loginAjax = function (username, password) {
-  var dfd = new $.Deferred();
+  var dfd = new $.Deferred(),
+      data = {
+        username: username,
+        password: password,
+        clientId: UCE.getClientId(),
+        appSessionId: UCE.getAppSessionId(),
+        apptype: UCE.getPlatformType(),
+        platform: UCE.getPhoneAndVersion()
+      };
 
   setTimeout(function () {
-    var mockData, rand = Math.random();
+    var mockData;
 
-    if (rand < 0.1) {
-      return dfd.reject();  // Mimic failed ajax request
-    } else if (rand < 0.4) {
-      mockData = {
-        response: {
-          status: '-1',
-          ClientName: 'John Doe',
-          LogoURL: 'img/uce.jpg'
-        }
-      };
-    } else if (rand < 0.7) {
-      mockData = {
-        response: {
-          status: '0',
-          ClientName: 'John Doe',
-          LogoURL: 'img/uce.jpg'
-        }
-      };
-    } else {
-      mockData = {
-        response: {
-          status: '1',
-          ClientName: 'John Doe',
-          LogoURL: 'img/uce.jpg'
-        }
-      };
-    }
+    mockData = {
+      "response": {
+        "status": "167",
+        "ClientName": "UpcomingEvents.com",
+        "LogoURL": "http://www.upcomingevents.com/images/tickets/UpcomingEventsStar150.png",
+        "Message": ""
+      }
+    };
 
     dfd.resolve(mockData);
   }, 1000);
 
+  // return UCE.ajax('login', data);
+
   return dfd.promise();
+};
+
+UCE.getPlatformType = function () {
+  var platform;
+  if (window.device && window.device.platform) {
+    platform = window.device.platform.toLowerCase();
+    if (platform === 'android') {
+      return 'a';
+    } else if (platform === 'ios') {
+      return 'i';
+    }
+  }
+  return 'unknown platform';
+};
+
+UCE.getPhoneModel = function () {
+  if (window.device && window.device.model) {
+    return window.device.model;
+  }
+  return 'unknown model';
+};
+
+UCE.getPlatformVersion = function () {
+  if (window.device && window.device.version) {
+    return window.device.version;
+  }
+  return 'unknown version';
+};
+
+UCE.getPhoneAndVersion = function () {
+  return UCE.getPhoneModel() + ' - ' + UCE.getPlatformVersion();
+};
+
+UCE.getClientId = function () {
+  return 'dummyClientId';
+};
+
+UCE.generateAppSessionId = function () {
+  var id = Math.floor(Math.random()*8999999999+1000000000);
+  lscache.remove('appSessionId');
+  lscache.set('appSessionId', id, 30);
+  return id;
+};
+
+UCE.isAppSessionIdExpired = function () {
+  return lscache.get('appSessionId') == null;
+};
+
+UCE.getAppSessionId = function () {
+  if (!UCE.isAppSessionIdExpired()) {
+    return lscache.get('appSessionId');
+  }
+  return UCE.generateAppSessionId();
 };
 
 UCE.isLoggedIn = function () {
   var clientName = window.lscache.get('ClientName');
-  return clientName != null;
+  return clientName != null && !UCE.isAppSessionIdExpired();
 };
 
 UCE.cacheLogin = function (response) {
@@ -152,6 +221,10 @@ UCE.cacheLogin = function (response) {
 UCE.clearLogin = function (response) {
   window.lscache.remove('ClientName');
   window.lscache.remove('LogoURL');
+};
+
+UCE.getLogoUrl = function () {
+  return window.lscache.get('LogoURL');
 };
 
 UCE.submitLogin = function (e) {
