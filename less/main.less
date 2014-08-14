@@ -63,7 +63,7 @@ input {
   padding: 0.5em;
 }
 
-.page-login, .page-locked, .page-scan, .page-valid, .page-invalid {
+.page-login, .page-locked, .page-scan, .page-manual, .page-valid, .page-invalid {
   text-align: center;
   display: none;
   opacity: 0;
@@ -136,6 +136,11 @@ input {
   }
 }
 
+.page-manual {
+  button {
+    margin: 1em;
+  }
+}
 .page-valid {
   background-color: @green;
 

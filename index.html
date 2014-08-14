@@ -56,12 +56,21 @@
 
     <p class="manual">
       No QR Code?  Having trouble scanning the QR Code?
-      Enter a ticket number here to check-in manually:
+      Click below to enter a ticket manually:
+    </p>
+    <button class="btn-manual">Enter a Ticket #</button>
+
+  </div>
+
+  <div class="page-manual">
+
+    <p class="manual">
+      Enter Ticket Number
     </p>
     <input type="number" class="input-qrcode" name="qrcode" placeholder="Enter a Ticket Number" />
     <br/>
     <button class="btn-submit">Submit</button>
-
+    <button class="btn-back">Back</button>
   </div>
 
   <div class="page-valid">
@@ -94,8 +103,9 @@
 
   <script id="tpl-invalid" type="text/x-handlebars-template">
     <p class="details">
-      Ticket number &quot;{{TicketCode}}&quot; is not valid
+      Ticket number &quot;{{TicketCode}}&quot; is not valid:
     </p>
+    <p class="details">{{Message}}</p>
   </script>
 
   <!-- build:jslib js/libs.js -->

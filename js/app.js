@@ -43,6 +43,8 @@ UCE.bindListeners = function () {
   $('.btn-refresh').on('click', UCE.refreshLogin);
   $('.btn-scan').on('click', UCE.scanTicket);
   $('.btn-scan-again').on('click', UCE.scanAgain);
+  $('.btn-manual').on('click', UCE.goToManual);
+  $('.btn-back').on('click', UCE.goToScan);
   $('.btn-submit').on('click', UCE.submitManualCode);
   $('.hide').on('click', UCE.reset);
 };
@@ -107,11 +109,13 @@ UCE.showValid = _.partial(UCE.showPage, '.page-valid');
 UCE.showInvalid = _.partial(UCE.showPage, '.page-invalid');
 UCE.showLogin = _.partial(UCE.showPage, '.page-login');
 UCE.showScan = _.partial(UCE.showPage, '.page-scan');
+UCE.showManual = _.partial(UCE.showPage, '.page-manual');
 UCE.showLocked = _.partial(UCE.showPage, '.page-locked');
 UCE.hideValid = _.partial(UCE.hidePage, '.page-valid');
 UCE.hideInvalid = _.partial(UCE.hidePage, '.page-invalid');
 UCE.hideLogin = _.partial(UCE.hidePage, '.page-login');
 UCE.hideScan = _.partial(UCE.hidePage, '.page-scan');
+UCE.hideManual = _.partial(UCE.hidePage, '.page-manual');
 UCE.hideLocked = _.partial(UCE.hidePage, '.page-locked');
 
 UCE.ajax = function (step, data) {
@@ -173,10 +177,6 @@ UCE.getPhoneAndVersion = function () {
   return UCE.getPhoneModel() + ' - ' + UCE.getPlatformVersion();
 };
 
-UCE.getClientId = function () {
-  return 'dummyClientId';
-};
-
 UCE.generateAppSessionId = function () {
   var id = Math.floor(Math.random()*8999999999+1000000000);
   lscache.remove('appSessionId');
@@ -199,6 +199,11 @@ UCE.getClientName = function () {
   return window.lscache.get('ClientName');
 };
 
+UCE.getClientId = function () {
+  var clientId = window.lscache.get('ClientID');
+  return (clientId ? clientId : '');
+};
+
 UCE.isLoggedIn = function () {
   var clientName = window.lscache.get('ClientName');
   return clientName != null && !UCE.isAppSessionIdExpired();
@@ -206,6 +211,7 @@ UCE.isLoggedIn = function () {
 
 UCE.cacheLogin = function (response) {
   UCE.clearLogin();
+  window.lscache.set('ClientID', response.status, 30);
   window.lscache.set('ClientName', response.ClientName, 30);
   window.lscache.set('LogoURL', response.LogoURL, 30);
 };
@@ -307,7 +313,7 @@ UCE.scanTicket = function (e) {
     }
 
     UCE.log('Scanned code: ' + result.text);
-    UCE.submitTicket(result.text);
+    UCE.submitTicket(result.text, true);
   }
 
   function error () {
@@ -334,6 +340,16 @@ UCE.getBarcodeScanner = function () {
   return null;
 };
 
+UCE.goToManual = function (e) {
+  UCE.cancelEvent(e);
+  UCE.hideScan().then(UCE.showManual);
+};
+
+UCE.goToScan = function (e) {
+  UCE.cancelEvent(e);
+  UCE.hideManual().then(UCE.showScan);
+};
+
 UCE.submitManualCode = function (e) {
   var $code = $('.input-qrcode'),
       code = $code.val();
@@ -345,41 +361,38 @@ UCE.submitManualCode = function (e) {
   }
 
   UCE.cancelEvent(e);
-  UCE.submitTicket(code);
+  UCE.submitTicket(code, false);
 };
 
-UCE.ticketAjax = function (code) {
-  var dfd = new $.Deferred();
+UCE.ticketAjax = function (code, fromScan) {
+  var step = fromScan ? 'validatescan' : 'validatemanual',
+      data,
+      dfd = new $.Deferred();
 
-  setTimeout(function () {
-    var mockData;
+  // setTimeout(function () {
+  //   var mockData;
 
-    if (Math.random() < 0.1) {
-      return dfd.reject();  // Mimic failed ajax request
-    } else if (Math.random() < 0.55) {
-      mockData = {
-        response: {
-          status: '1',
-          TicketType: 'VIP'
-        }
-      };
-    } else {
-      mockData = {
-        response: {
-          status: '0',
-          TicketType: null
-        }
-      };
-    }
+  //   mockData = {
+  //     response: {
+  //       status: '1',
+  //       TicketType: 'VIP'
+  //     }
+  //   };
 
-    dfd.resolve(mockData);
-  }, 1000);
+  //   dfd.resolve(mockData);
+  // }, 1000);
 
-  UCE.log('Faking ajax call..');
-  return dfd.promise();
+  // UCE.log('Faking ajax call..');
+  // return dfd.promise();
+
+  data = {
+    clientid: UCE.getClientId(),
+    ticketnumber: code
+  }
+  return UCE.ajax(step, data);
 };
 
-UCE.submitTicket = function (code) {
+UCE.submitTicket = function (code, fromScan) {
 
   function success(response) {
     var source, template;
@@ -408,7 +421,7 @@ UCE.submitTicket = function (code) {
     return data.response;
   }
 
-  return UCE.ticketAjax(code)
+  return UCE.ticketAjax(code, fromScan)
             .then(enhanceData)
             .done(success)
             .fail(error);
