@@ -26,16 +26,31 @@
     <p>Please log in below</p>
     <fieldset>
       <label for="username">Username</label>
-      <input type="text" id="username" placeholder="Username" />
+      <input type="text" id="username" placeholder="Username" value="mattb" />
     </fieldset>
     <fieldset>
       <label for="username">Password</label>
-      <input type="password" id="password" placeholder="Password" />
+      <input type="password" id="password" placeholder="Password" value="dHwe$3Y" />
     </fieldset>
     <button class="btn-login">Submit</button>
+    <p class="error"></p>
+  </div>
+
+  <div class="page-locked">
+    <h2>Event Ticket Scanner</h2>
+    <p class="message">
+      Account Locked Out.
+    </p>
+    <p class="message">
+      Please wait 15 minutes and press the refresh
+      button below to try again.
+    </p>
+    <button class="btn-refresh">Refresh</button>
   </div>
 
   <div class="page-scan">
+
+    <h3> Welcome <span class="client-name"></span></h3>
 
     <button class="btn-scan">Scan Ticket</button>
 

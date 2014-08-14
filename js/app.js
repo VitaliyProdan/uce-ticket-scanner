@@ -40,6 +40,7 @@ UCE.init = function () {
 
 UCE.bindListeners = function () {
   $('.btn-login').on('click', UCE.submitLogin);
+  $('.btn-refresh').on('click', UCE.refreshLogin);
   $('.btn-scan').on('click', UCE.scanTicket);
   $('.btn-scan-again').on('click', UCE.scanAgain);
   $('.btn-submit').on('click', UCE.submitManualCode);
@@ -49,18 +50,19 @@ UCE.bindListeners = function () {
 UCE.showPage = function (selector) {
   var $el = $(selector),
       dfd = new $.Deferred(),
-      logo;
+      logo, clientName;
 
   UCE.log('Showing page ' + selector);
   $el.addClass('show');
 
   if (selector === '.page-scan') {
     logo = UCE.getLogoUrl();
-    if (logo) {
-      $('.header img').attr('src', logo).show();
-    }
+    if (logo) { $('.header img').attr('src', logo).show(); }
+    clientName = UCE.getClientName();
+    if (clientName) { $('.client-name').text(clientName); }
   } else if (selector === '.page-login') {
     $('.header img').attr('src', '').hide();
+    $('.client-name').text('');
   }
 
   requestAnimationFrame(function () {
@@ -105,10 +107,12 @@ UCE.showValid = _.partial(UCE.showPage, '.page-valid');
 UCE.showInvalid = _.partial(UCE.showPage, '.page-invalid');
 UCE.showLogin = _.partial(UCE.showPage, '.page-login');
 UCE.showScan = _.partial(UCE.showPage, '.page-scan');
+UCE.showLocked = _.partial(UCE.showPage, '.page-locked');
 UCE.hideValid = _.partial(UCE.hidePage, '.page-valid');
 UCE.hideInvalid = _.partial(UCE.hidePage, '.page-invalid');
 UCE.hideLogin = _.partial(UCE.hidePage, '.page-login');
 UCE.hideScan = _.partial(UCE.hidePage, '.page-scan');
+UCE.hideLocked = _.partial(UCE.hidePage, '.page-locked');
 
 UCE.ajax = function (step, data) {
   var endpoint = 'http://www.upcomingevents.com/ticketscanner/process.asp';
@@ -135,24 +139,7 @@ UCE.loginAjax = function (username, password) {
         platform: UCE.getPhoneAndVersion()
       };
 
-  setTimeout(function () {
-    var mockData;
-
-    mockData = {
-      "response": {
-        "status": "167",
-        "ClientName": "UpcomingEvents.com",
-        "LogoURL": "http://www.upcomingevents.com/images/tickets/UpcomingEventsStar150.png",
-        "Message": ""
-      }
-    };
-
-    dfd.resolve(mockData);
-  }, 1000);
-
-  // return UCE.ajax('login', data);
-
-  return dfd.promise();
+  return UCE.ajax('login', data);
 };
 
 UCE.getPlatformType = function () {
@@ -208,6 +195,10 @@ UCE.getAppSessionId = function () {
   return UCE.generateAppSessionId();
 };
 
+UCE.getClientName = function () {
+  return window.lscache.get('ClientName');
+};
+
 UCE.isLoggedIn = function () {
   var clientName = window.lscache.get('ClientName');
   return clientName != null && !UCE.isAppSessionIdExpired();
@@ -238,25 +229,31 @@ UCE.submitLogin = function (e) {
     if (response.valid) {
       UCE.cacheLogin(response);
       return UCE.hideLogin().then(UCE.showScan);
+      $('.page-login .error').hide().text('');
+    }
+
+    UCE.clearLogin(response);
+    if (response.locked) {
+      UCE.hideLogin().then(UCE.showLocked);
     } else {
-      UCE.clearLogin(response);
-      window.alert(response.message);
+      $('.page-login .error').text(response.Message).show();
     }
   }
 
   function error(e) {
     UCE.log('Could not login');
-    window.alert('Login could not be processed.  Please make sure you have ' +
-                 'a valid internet connection and try again.');
+    $('.page-login .error').text('Login could not be processed.  ' +
+                                 'Please make sure you have ' +
+                                 'a valid internet connection and ' +
+                                 'try again.').show();
   }
 
   function enhanceData(data) {
     if (data.response.status === '-1') {
       data.response.valid = false;
-      data.response.message = 'Sorry, this account has been locked out.';
+      data.response.locked = true;
     } else if (data.response.status === '0') {
       data.response.valid = false;
-      data.response.message = 'Incorrect username/password combination.';
     } else {
       data.response.valid = true;
     }
@@ -275,6 +272,11 @@ UCE.submitLogin = function (e) {
             .then(enhanceData)
             .done(success)
             .fail(error);
+};
+
+UCE.refreshLogin = function (e) {
+  UCE.cancelEvent(e);
+  UCE.hideLocked().then(UCE.showLogin);
 };
 
 UCE.reset = function (e) {
