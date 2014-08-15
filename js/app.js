@@ -42,6 +42,7 @@ UCE.bindListeners = function () {
   $('.btn-login').on('click', UCE.submitLogin);
   $('.btn-refresh').on('click', UCE.refreshLogin);
   $('.btn-scan').on('click', UCE.scanTicket);
+  $('.btn-logout').on('click', UCE.logout);
   $('.btn-scan-again').on('click', UCE.scanAgain);
   $('.btn-manual').on('click', UCE.goToManual);
   $('.btn-back').on('click', UCE.goToScan);
@@ -138,7 +139,7 @@ UCE.loginAjax = function (username, password) {
         username: username,
         password: password,
         clientId: UCE.getClientId(),
-        appSessionId: UCE.getAppSessionId(),
+        appSessionId: UCE.getAppSessionId(true),
         apptype: UCE.getPlatformType(),
         platform: UCE.getPhoneAndVersion()
       };
@@ -188,11 +189,11 @@ UCE.isAppSessionIdExpired = function () {
   return lscache.get('appSessionId') == null;
 };
 
-UCE.getAppSessionId = function () {
+UCE.getAppSessionId = function (generate) {
   if (!UCE.isAppSessionIdExpired()) {
     return lscache.get('appSessionId');
   }
-  return UCE.generateAppSessionId();
+  return generate ? UCE.generateAppSessionId() : null;
 };
 
 UCE.getClientName = function () {
@@ -206,17 +207,33 @@ UCE.getClientId = function () {
 
 UCE.isLoggedIn = function () {
   var clientName = window.lscache.get('ClientName');
-  return clientName != null && !UCE.isAppSessionIdExpired();
+  if (clientName != null && !UCE.isAppSessionIdExpired()) {
+    return true;
+  }
+  UCE.clearLogin();
+  return false;
+};
+
+UCE.checkValidLoginStatus = function () {
+  var sessionId = UCE.getAppSessionId();
+  if (!UCE.isLoggedIn()) {
+    window.alert("We're sorry, you have been logged out after 30 minutes " +
+                 "of inactivity.  Please log in again");
+    return false;
+  }
+  window.lscache.set('appSessionId', sessionId, 30);
+  return true;
 };
 
 UCE.cacheLogin = function (response) {
   UCE.clearLogin();
-  window.lscache.set('ClientID', response.status, 30);
-  window.lscache.set('ClientName', response.ClientName, 30);
-  window.lscache.set('LogoURL', response.LogoURL, 30);
+  window.lscache.set('ClientID', response.status);
+  window.lscache.set('ClientName', response.ClientName);
+  window.lscache.set('LogoURL', response.LogoURL);
 };
 
 UCE.clearLogin = function (response) {
+  window.lscache.remove('ClientID');
   window.lscache.remove('ClientName');
   window.lscache.remove('LogoURL');
 };
@@ -285,6 +302,12 @@ UCE.refreshLogin = function (e) {
   UCE.hideLocked().then(UCE.showLogin);
 };
 
+UCE.logout = function (e) {
+  UCE.cancelEvent();
+  UCE.clearLogin();
+  UCE.hideScan().then(UCE.showLogin);
+};
+
 UCE.reset = function (e) {
   UCE.cancelEvent(e);
   UCE.hideValid();
@@ -295,6 +318,10 @@ UCE.reset = function (e) {
 UCE.scanAgain = function (e) {
   UCE.cancelEvent(e);
 
+  if (!UCE.checkValidLoginStatus()) {
+    return UCE.hideValid().then(UCE.showLogin);
+  }
+
   UCE.hideValid().then(UCE.scanTicket);
 };
 
@@ -302,6 +329,10 @@ UCE.scanTicket = function (e) {
   var scanner = UCE.getBarcodeScanner();
 
   UCE.cancelEvent(e);
+
+  if (!UCE.checkValidLoginStatus()) {
+    return UCE.hideScan().then(UCE.showLogin);
+  }
 
   function success(result) {
     if (result.cancelled !== 0) {
@@ -342,11 +373,21 @@ UCE.getBarcodeScanner = function () {
 
 UCE.goToManual = function (e) {
   UCE.cancelEvent(e);
+
+  if (!UCE.checkValidLoginStatus()) {
+    return UCE.hideScan().then(UCE.showLogin);
+  }
+
   UCE.hideScan().then(UCE.showManual);
 };
 
 UCE.goToScan = function (e) {
   UCE.cancelEvent(e);
+
+  if (!UCE.checkValidLoginStatus()) {
+    return UCE.hideManual().then(UCE.showLogin);
+  }
+
   UCE.hideManual().then(UCE.showScan);
 };
 
@@ -354,13 +395,18 @@ UCE.submitManualCode = function (e) {
   var $code = $('.input-qrcode'),
       code = $code.val();
 
+  UCE.cancelEvent(e);
+
+  if (!UCE.checkValidLoginStatus()) {
+    return UCE.hideManual().then(UCE.showLogin);
+  }
+
   if (code.trim() === '') {
     UCE.log('Invalid code entered');
     window.alert('Please enter a valid Ticket Code');
     return;
   }
 
-  UCE.cancelEvent(e);
   UCE.submitTicket(code, false);
 };
 
