@@ -5,6 +5,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
   <title>TicketScanner</title>
   <meta name="description" content="" />
+  <meta name="format-detection" content="telephone=no">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui" />
 
   <!--<link href='http://fonts.googleapis.com/css?family=Kalam' rel='stylesheet' type='text/css'>-->
@@ -26,11 +27,11 @@
     <p>Please log in below</p>
     <fieldset>
       <label for="username">Username</label>
-      <input type="text" id="username" placeholder="Username" value="mattb" />
+      <input type="text" id="username" />
     </fieldset>
     <fieldset>
       <label for="username">Password</label>
-      <input type="password" id="password" placeholder="Password" value="dHwe$3Y" />
+      <input type="password" id="password" class="password" />
     </fieldset>
     <button class="btn-login">Submit</button>
     <p class="error"></p>
@@ -67,7 +68,7 @@
     <p class="manual">
       Enter Ticket Number
     </p>
-    <input type="number" class="input-qrcode" name="qrcode" placeholder="Enter a Ticket Number" />
+    <input type="number" class="input-qrcode" name="qrcode" />
     <br/>
     <button class="btn-submit">Submit</button>
     <button class="btn-back">Back</button>
@@ -87,18 +88,11 @@
   </div>
 
   <script id="tpl-valid" type="text/x-handlebars-template">
-    <table>
-      <tbody>
-        <tr>
-          <td class="label">Ticket Code:</td>
-          <td class="field">{{TicketCode}}</td>
-        </tr>
-        <tr>
-          <td class="label">Ticket Type:</td>
-          <td class="field">{{TicketType}}</td>
-        </tr>
-      </tbody>
-    </table
+    <p class="label">Ticket Code</p>
+    <p class="field">{{TicketCode}}</p>
+
+    <p class="label">Ticket Type</p>
+    <p class="field">{{TicketType}}</p>
   </script>
 
   <script id="tpl-invalid" type="text/x-handlebars-template">

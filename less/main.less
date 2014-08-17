@@ -125,7 +125,8 @@ input {
     background-image: url(../img/qrcode.png);
     background-repeat: no-repeat;
     background-position: center 0.5em;
-    padding-top: 115px;
+    background-size: auto 70px;
+    padding-top: 90px;
   }
 
   .btn-submit {
@@ -134,27 +135,22 @@ input {
 
   .manual {
     padding: 1em;
+    margin: 0;
   }
 }
 
 .page-valid {
   background-color: @green;
 
-  table {
-    width: 100%;
-    margin-bottom: 2em;
+  .label {
+    margin-top: 1em;
+    margin-bottom: 0;
+    font-weight: bold;
+    text-decoration: underline;
+  }
 
-    td {
-      padding: 0.25em 1em;
-
-      &.label {
-        text-align: right;
-      }
-
-      &.field {
-        text-align: left;
-      }
-    }
+  .field {
+    margin-top: 0.25em;
   }
 
   .btn-scan-again {

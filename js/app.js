@@ -40,6 +40,7 @@ UCE.init = function () {
 
 UCE.bindListeners = function () {
   $('.btn-login').on('click', UCE.submitLogin);
+  $('.password').on('keyup', UCE.loginOnEnter);
   $('.btn-refresh').on('click', UCE.refreshLogin);
   $('.btn-scan').on('click', UCE.scanTicket);
   $('.btn-logout').on('click', UCE.logout);
@@ -47,6 +48,7 @@ UCE.bindListeners = function () {
   $('.btn-manual').on('click', UCE.goToManual);
   $('.btn-back').on('click', UCE.goToScan);
   $('.btn-submit').on('click', UCE.submitManualCode);
+  $('.input-qrcode').on('keyup', UCE.submitManualCodeOnEnter);
   $('.hide').on('click', UCE.reset);
 };
 
@@ -126,11 +128,20 @@ UCE.ajax = function (step, data) {
 
   data.step = step;
 
+  function success (data) {
+    console.log("Ajax success: ");
+    console.log(data);
+  }
+
+  function error (e) {
+    console.error("Ajax error: " + e);
+  }
+
   return $.ajax({
     url: endpoint,
     dataType: 'json',
     data: data
-  });
+  }).done(success).fail(error);
 };
 
 UCE.loginAjax = function (username, password) {
@@ -240,6 +251,14 @@ UCE.clearLogin = function (response) {
 
 UCE.getLogoUrl = function () {
   return window.lscache.get('LogoURL');
+};
+
+UCE.loginOnEnter = function (e) {
+  if (e.keyCode === 13) {
+    $(e.target).blur();
+    UCE.submitLogin();
+  }
+  return false;
 };
 
 UCE.submitLogin = function (e) {
@@ -355,7 +374,7 @@ UCE.scanTicket = function (e) {
     success({
       cancelled: 0,
       format: 'QR_CODE',
-      text: window.prompt('Enter a code', '123456789')
+      text: window.prompt('Enter a code', '1777012821')
     });
     return;
   }
@@ -391,6 +410,14 @@ UCE.goToScan = function (e) {
   UCE.hideManual().then(UCE.showScan);
 };
 
+UCE.submitManualCodeOnEnter = function (e) {
+  if (e.keyCode === 13) {
+    $(e.target).blur();
+    UCE.submitManualCode();
+  }
+  return false;
+};
+
 UCE.submitManualCode = function (e) {
   var $code = $('.input-qrcode'),
       code = $code.val();
@@ -410,31 +437,21 @@ UCE.submitManualCode = function (e) {
   UCE.submitTicket(code, false);
 };
 
+UCE.uncheckin = function (code) {
+  if (!code) { code = '1777012821'; }
+  return UCE.ajax('uncheckin', { clientid: UCE.getClientId(), ticketnumber: code });
+};
+
 UCE.ticketAjax = function (code, fromScan) {
   var step = fromScan ? 'validatescan' : 'validatemanual',
       data,
       dfd = new $.Deferred();
 
-  // setTimeout(function () {
-  //   var mockData;
-
-  //   mockData = {
-  //     response: {
-  //       status: '1',
-  //       TicketType: 'VIP'
-  //     }
-  //   };
-
-  //   dfd.resolve(mockData);
-  // }, 1000);
-
-  // UCE.log('Faking ajax call..');
-  // return dfd.promise();
-
   data = {
     clientid: UCE.getClientId(),
     ticketnumber: code
   }
+
   return UCE.ajax(step, data);
 };
 
