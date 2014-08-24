@@ -82,17 +82,18 @@ UCE.init = function () {
 };
 
 UCE.bindListeners = function () {
-  $('.btn-login').on('click', UCE.submitLogin);
+  $('.btn-login').hammer().on('tap', UCE.submitLogin);
+  $('.btn-refresh').hammer().on('tap', UCE.refreshLogin);
+  $('.btn-scan').hammer().on('tap', UCE.scanTicket);
+  $('.btn-logout').hammer().on('tap', UCE.logout);
+  $('.btn-scan-again').hammer().on('tap', UCE.scanAgain);
+  $('.btn-manual').hammer().on('tap', UCE.goToManual);
+  $('.btn-back').hammer().on('tap', UCE.goToScan);
+  $('.btn-submit').hammer().on('tap', UCE.submitManualCode);
+  $('.hide').hammer().on('tap', UCE.reset);
+
   $('.password').on('keyup', UCE.loginOnEnter);
-  $('.btn-refresh').on('click', UCE.refreshLogin);
-  $('.btn-scan').on('click', UCE.scanTicket);
-  $('.btn-logout').on('click', UCE.logout);
-  $('.btn-scan-again').on('click', UCE.scanAgain);
-  $('.btn-manual').on('click', UCE.goToManual);
-  $('.btn-back').on('click', UCE.goToScan);
-  $('.btn-submit').on('click', UCE.submitManualCode);
   $('.input-qrcode').on('keyup', UCE.submitManualCodeOnEnter);
-  $('.hide').on('click', UCE.reset);
 };
 
 UCE.showPage = function (selector) {
@@ -170,6 +171,8 @@ UCE.ajax = function (step, data) {
 
   data.step = step;
 
+  var spinner = window.plugins ? window.plugins.spinnerDialog : null;
+
   function success (data) {
     console.log("Ajax success: ");
     console.log(data);
@@ -179,11 +182,19 @@ UCE.ajax = function (step, data) {
     console.error("Ajax error: " + e);
   }
 
+  function hideSpinner() {
+    spinner.hide();
+  }
+
+  if (spinner) {
+    spinner.show();
+  }
+
   return $.ajax({
     url: UCE.config.apiEndpoint,
     dataType: 'json',
     data: data
-  }).done(success).fail(error);
+  }).done(success).fail(error).always(hideSpinner);
 };
 
 UCE.loginAjax = function (username, password) {
