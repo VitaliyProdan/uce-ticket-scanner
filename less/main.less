@@ -81,6 +81,16 @@ input {
   p {
     margin-left: 10%;
     margin-right: 10%;
+
+    &.error {
+      display: none;
+      background-color: @red;
+      color: white;
+      font-style: italic;
+      padding: 0.5em 10%;
+      margin-left: 0;
+      margin-right: 0;
+    }
   }
 }
 
@@ -107,16 +117,6 @@ input {
 
   .btn-login {
     margin-top: 1em;
-  }
-
-  .error {
-    display: none;
-    background-color: @red;
-    color: white;
-    font-style: italic;
-    padding: 0.5em 10%;
-    margin-left: 0;
-    margin-right: 0;
   }
 }
 
