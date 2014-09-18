@@ -16,7 +16,9 @@ UCE.config = {
     clientId: 'client-id',
     clientName: 'client-name',
     logoUrl: 'logo-url',
-    userId: 'user-id'
+    userId: 'user-id',
+    eventId: 'event-id',
+    eventName: 'event-name'
   }
 };
 
@@ -76,7 +78,11 @@ UCE.init = function () {
   }
 
   if (UCE.isLoggedIn()) {
-    UCE.showScan();
+    if (UCE.getEventId()) {
+      UCE.showScan();
+    } else {
+      UCE.prepEventView();
+    }
   } else {
     UCE.showLogin();
   }
@@ -120,10 +126,15 @@ UCE.showPage = function (selector) {
   $el.addClass('show');
 
   if (selector === '.page-scan') {
-    logo = UCE.getLogoUrl();
+    var logo = UCE.getLogoUrl();
     if (logo) { $('.header img').attr('src', logo).show(); }
-    clientName = UCE.getClientName();
+    var clientName = UCE.getClientName();
     if (clientName) { $('.client-name').text(clientName); }
+    var eventName = UCE.getEventName() || 'Unknown Event';
+    $('.page-scan .event-name').html(eventName);
+  } else if (selector === '.page-events') {
+    var logo = UCE.getLogoUrl();
+    if (logo) { $('.header img').attr('src', logo).show(); }
   } else if (selector === '.page-login') {
     $('.header img').attr('src', '').hide();
     $('.client-name').text('');
@@ -238,6 +249,36 @@ UCE.loginAjax = function (username, password) {
   return UCE.ajax('login', data);
 };
 
+UCE.eventAjax = function () {
+  var data = {
+    clientid: UCE.getClientId()
+  };
+
+  function success(d) {
+    if (d && d.response && d.response.events && _.isArray(d.response.events.event)) {
+      return _(d.response.events.event)
+              .map(function (e) {
+                var desc = e.name,
+                    toks = desc.split('-'),
+                    dateStr = toks.pop().trim(),
+                    date = new Date(Date.parse(dateStr)),
+                    name = toks.join('-').trim();
+                return { id: e.id, name: name, date: date, dateStr: dateStr };
+              })
+              .sortBy('date')
+              .value();
+    }
+    return error('Invalid JSON returned');
+  }
+
+  function error(e) {
+    console.error('Could not load events: ' + e);
+  }
+
+  return UCE.ajax('eventlist', data).then(success, error);
+};
+
+
 UCE.getPlatformType = function () {
   var platform;
   if (window.device && window.device.platform) {
@@ -301,6 +342,22 @@ UCE.getUserId = function () {
   return (userId ? userId : '');
 };
 
+UCE.getEventId = function () {
+  return window.lscache.get(UCE.config.lsKeys.eventId);
+};
+
+UCE.setEventId = function (id) {
+  window.lscache.set(UCE.config.lsKeys.eventId, id);
+};
+
+UCE.getEventName = function () {
+  return window.lscache.get(UCE.config.lsKeys.eventName);
+};
+
+UCE.setEventName = function (name) {
+  window.lscache.set(UCE.config.lsKeys.eventName, name);
+};
+
 UCE.isLoggedIn = function () {
   var clientName = window.lscache.get(UCE.config.lsKeys.clientName);
   if (clientName != null && !UCE.isAppSessionIdExpired()) {
@@ -336,6 +393,8 @@ UCE.clearLogin = function (response) {
   window.lscache.remove(UCE.config.lsKeys.clientName);
   window.lscache.remove(UCE.config.lsKeys.logoUrl);
   window.lscache.remove(UCE.config.lsKeys.userId);
+  window.lscache.remove(UCE.config.lsKeys.eventId);
+  window.lscache.remove(UCE.config.lsKeys.eventName);
 };
 
 UCE.getLogoUrl = function () {
@@ -360,7 +419,7 @@ UCE.submitLogin = function (e) {
     if (response.valid) {
       UCE.cacheLogin(response);
       $('.page-login .error').hide().text('');
-      return UCE.transitionPage('.page-scan');
+      return UCE.prepEventView();
     }
 
     UCE.clearLogin(response);
@@ -421,6 +480,36 @@ UCE.reset = function (e) {
   UCE.cancelEvent(e);
   $('.input-qrcode').val('');
   return UCE.transitionPage('.page-scan');
+};
+
+UCE.prepEventView = function () {
+
+  function success(events) {
+    var source = $('#tpl-events').html();
+    var template = Handlebars.compile(source);
+    $('.event').hammer().off('tap');
+    $('.page-events ul').html(template(events));
+    $('.event').hammer().on('tap', UCE.chooseEvent);
+    return UCE.transitionPage('.page-events');
+  }
+
+  function error(e) {
+    $('.page-login .error').html('We\'re sorry, there was an issue retrieving ' +
+                                 'the events for this account.  Please try ' +
+                                 'logging in again.')
+                           .show();
+    return false;
+  }
+
+  return UCE.eventAjax().then(success, error);
+};
+
+UCE.chooseEvent = function (e) {
+  var $li = $(e.target),
+      eventId = $li.data('id');
+  UCE.setEventId(eventId);
+  UCE.setEventName($li.find('.name').html());
+  UCE.transitionPage('.page-scan');
 };
 
 UCE.scanAgain = function (e) {
@@ -537,6 +626,7 @@ UCE.ticketAjax = function (code, fromScan) {
   data = {
     clientid: UCE.getClientId(),
     userid: UCE.getUserId(),
+    eventid: UCE.getEventId(),
     ticketnumber: code
   };
 
