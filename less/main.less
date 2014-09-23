@@ -64,14 +64,6 @@ input {
   padding: 0.5em;
 }
 
-.btn-change-event, .btn-logout {
-  width: 29%;
-  margin-left: 1%;
-  margin-right: 1%;
-  font-size: 1em;
-  height: 2em;
-}
-
 .page-login, .page-locked, .page-events, .page-scan, .page-manual, .page-valid, .page-invalid {
   text-align: center;
   display: none;
@@ -144,9 +136,9 @@ input {
         padding: 0;
         margin: 0;
         font-weight: bold;
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
+        // overflow: hidden;
+        // white-space: nowrap;
+        // text-overflow: ellipsis;
       }
 
       .date {
@@ -162,10 +154,17 @@ input {
 .page-scan {
   text-align: center;
 
+  .welcome {
+    margin-left: 10%;
+    margin-right: 10%;
+  }
+
   .event-label {
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
+    margin-left: 5%;
+    margin-right: 5%;
+    // overflow: hidden;
+    // white-space: nowrap;
+    // text-overflow: ellipsis;
 
     .label {
       font-weight: bold;
@@ -188,6 +187,15 @@ input {
     padding: 1em;
     margin: 0;
   }
+
+  .btn-change-event, .btn-logout {
+    width: 43%;
+    margin-left: 1%;
+    margin-right: 1%;
+    font-size: 1em;
+    height: 3em;
+  }
+
 }
 
 .page-valid {
