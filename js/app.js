@@ -93,6 +93,7 @@ UCE.bindListeners = function () {
   $('.btn-refresh').hammer().on('tap', UCE.refreshLogin);
   $('.btn-scan').hammer().on('tap', UCE.scanTicket);
   $('.btn-logout').hammer().on('tap', UCE.logout);
+  $('.btn-change-event').hammer().on('tap', UCE.changeEvent);
   $('.btn-scan-again').hammer().on('tap', UCE.scanAgain);
   $('.btn-manual').hammer().on('tap', UCE.goToManual);
   $('.btn-back').hammer().on('tap', UCE.goToScan);
@@ -258,14 +259,11 @@ UCE.eventAjax = function () {
     if (d && d.response && d.response.events && _.isArray(d.response.events.event)) {
       return _(d.response.events.event)
               .map(function (e) {
-                var desc = e.name,
-                    toks = desc.split('-'),
-                    dateStr = toks.pop().trim(),
-                    date = new Date(Date.parse(dateStr)),
-                    name = toks.join('-').trim();
-                return { id: e.id, name: name, date: date, dateStr: dateStr };
+                e.dateObj = new Date(Date.parse(e.date));
+                return e;
               })
-              .sortBy('date')
+              .sortBy('dateObj')
+              .reverse()
               .value();
     }
     return error('Invalid JSON returned');
@@ -471,9 +469,15 @@ UCE.refreshLogin = function (e) {
 };
 
 UCE.logout = function (e) {
-  UCE.cancelEvent();
+  UCE.cancelEvent(e);
   UCE.clearLogin();
   return UCE.transitionPage('.page-login');
+};
+
+UCE.changeEvent = function (e) {
+  UCE.cancelEvent(e);
+  UCE.prepEventView();
+  return false;
 };
 
 UCE.reset = function (e) {
@@ -498,6 +502,7 @@ UCE.prepEventView = function () {
                                  'the events for this account.  Please try ' +
                                  'logging in again.')
                            .show();
+    return UCE.transitionPage('.page-login');
     return false;
   }
 
@@ -523,7 +528,9 @@ UCE.scanAgain = function (e) {
 };
 
 UCE.scanTicket = function (e) {
-  var scanner = UCE.getBarcodeScanner();
+  var scanner = UCE.getBarcodeScanner(),
+      acceptedFormats = [ 'QR_CODE', 'UPC_E', 'UPC_A', 'EAN_8', 'EAN_13',
+                          'CODE_128', 'CODE_39', 'ITF' ];
 
   UCE.cancelEvent(e);
 
@@ -536,9 +543,9 @@ UCE.scanTicket = function (e) {
     if (result.cancelled) {
       UCE.log('User cancelled the scan.');
       return UCE.transitionPage('.page-scan');
-    } else if (result.format !== 'QR_CODE') {
-      UCE.log('QR code not found.');
-      $('.page-scan .error').html('QR Code not found.  Please try again.').show();
+    } else if (acceptedFormats.indexOf(result.format) < 0) {
+      UCE.log('QR code/Barcode not found.');
+      $('.page-scan .error').html('QR Code/Barcode not found.  Please try again.').show();
       return UCE.transitionPage('.page-scan');
     }
 

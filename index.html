@@ -67,6 +67,8 @@
       Click below to enter a ticket manually:
     </p>
     <button class="btn-manual">Enter a Ticket #</button>
+    <br/>
+    <button class="btn-change-event">Events</button>
     <button class="btn-logout">Logout</button>
   </div>
 
@@ -105,7 +107,7 @@
     {{#each .}}
       <li class="event" data-id="{{id}}">
         <p class="name">{{name}}</p>
-        <p class="date">{{dateStr}}</p>
+        <p class="date">{{date}}</p>
       </li>
     {{/each}}
   </script>
