@@ -601,17 +601,20 @@ UCE.goToScan = function (e) {
 UCE.onManualCodeKeyUp = function (e) {
   var $input = $(e.target),
       code = e.keyCode,
-      $err = $('.qrcode-error');
+      $err = $('.qrcode-error'),
+      regex = /[^0-9a-z\-]/ig;
 
   if (code === 13) {
     $err.hide();
     $input.blur();
     UCE.submitManualCode();
     return false;
-  } else if ($input.val().length > 20) {
-    $input.val($input.val().slice(0, 20));
-    $err.html('Ticket numbers can only be 20 digits').show();
-    return false;
+  } else if (code !== 8 && code !== 189 && regex.test(String.fromCharCode(code))) {
+    // For whatever reason, fromCharCode doesn't interpret a dash correctly (189)
+    // 8 is to allow backspace
+    $err.html('Ticket numbers can only contain numbers, letters, and dashes').show();
+    $input.val($input.val().replace(regex, ''));
+    return UCE.cancelEvent(e);
   }
 
   $err.hide();
