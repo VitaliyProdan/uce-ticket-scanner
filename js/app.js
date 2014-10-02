@@ -101,7 +101,7 @@ UCE.bindListeners = function () {
   $('.hide').hammer().on('tap', UCE.reset);
 
   $('.password').on('keyup', UCE.loginOnEnter);
-  $('.input-qrcode').on('keyup', UCE.submitManualCodeOnEnter);
+  $('.input-qrcode').on('keyup', UCE.onManualCodeKeyUp);
 };
 
 UCE.transitionPage = function (selector) {
@@ -598,12 +598,24 @@ UCE.goToScan = function (e) {
   return UCE.transitionPage('.page-scan');
 };
 
-UCE.submitManualCodeOnEnter = function (e) {
-  if (e.keyCode === 13) {
-    $(e.target).blur();
+UCE.onManualCodeKeyUp = function (e) {
+  var $input = $(e.target),
+      code = e.keyCode,
+      $err = $('.qrcode-error');
+
+  if (code === 13) {
+    $err.hide();
+    $input.blur();
     UCE.submitManualCode();
+    return false;
+  } else if ($input.val().length > 20) {
+    $input.val($input.val().slice(0, 20));
+    $err.html('Ticket numbers can only be 20 digits').show();
+    return false;
   }
-  return false;
+
+  $err.hide();
+  return true;
 };
 
 UCE.submitManualCode = function (e) {
